@@ -1,22 +1,49 @@
 <html>
 
+<head>
+    <style>
+        .container {
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+        }
+
+        .panel {
+            flex: 1;
+            border-right: 1px solid #ccc;
+            padding: 1em;
+            box-sizing: border-box;
+        }
+
+        .panel:last-child {
+            border-right: none;
+        }
+    </style>
+</head>
+
 <body>
     <div class="container">
-        <div class="panel" id="gas">
-            <canvas></canvas>
-            <div class="controls">...</div>
-        </div>
-
         <div class="panel" id="reactor">
-            <canvas></canvas>
-            <div class="controls">...</div>
+            <label for="temperature-gauge">Temperature: </label>
+            <!-- INSERT_YOUR_CODE -->
+            <p>
+                N<sub>2</sub>(g) + 3 H<sub>2</sub>(g)
+                &#8652; 2 NH<sub>3</sub>(g)
+            </p>
+            <small>
+                (Ammonia synthesis: exothermic, reversible, equilibrium reaction)
+            </small>
+            <h1 id="temperature-gauge">0</h1>
+            <!-- <canvas></canvas>
+            <div class="controls">...</div> -->
         </div>
-
         <div class="panel" id="heater">
-            <input type="range" min="0" max="100" value="50" id="slider">
-            <span id="value">50</span>
-            <canvas></canvas>
-            <div class="controls">...</div>
+            <label for="heater-slider">Heat</label>
+            <input id="heater-slider" type="range" min="0" max="100" value="50">
+            <h1 id="heater-value"></h1>
+            <span id="value"></span>
+            <!-- <canvas></canvas>
+            <div class="controls">...</div> -->
         </div>
     </div>
     <script src="index.ts"></script>
