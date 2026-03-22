@@ -1,6 +1,8 @@
 import type { State, Controls, Action } from "./state";
 import UI from "./ui";
 
+// Setup 
+const ui = new UI();
 let last = performance.now();
 let state: State = {
     time: 0,
@@ -10,8 +12,30 @@ let state: State = {
     },
 };
 
-const ui = new UI();
 
+// function actionToControl(action: Action, state: State): Controls {
+//     switch (action.type) {
+//         case "update_heater":
+//             return {
+//                 ...state.controls,
+//                 heater: action.payload.heater,
+//             };
+//             break;
+//     }
+
+//     return state.controls;
+// }
+function reduceControls(controls: Controls, action: Action): Controls {
+    switch (action.type) {
+        case "update_heater":
+            return {
+                ...controls,
+                heater: action.payload.heater,
+            };
+    }
+
+    return controls;
+}
 // the controls variables that we want to change if changed by the user
 // update 
 function loop(now: number) {
@@ -22,16 +46,11 @@ function loop(now: number) {
 
     // UI actions -> Control change
     const controlChanges = ui.get_actions();
-    for (const controlChange of controlChanges) {
-        switch (controlChange.type) {
-            case "update_heater":
-                state.controls.heater = controlChange.payload.heater;
-                break;
-        }
-    }
+    
+    state.controls = controlChanges.reduce(reduceControls, state.controls);
     ui.clear_actions();
     // Control change -> state change
-    state = reducer(state, dt);
+    state = reduceState(state, dt);
     // state change -> UI update
     ui.update(state);
 
@@ -45,7 +64,7 @@ function loop(now: number) {
 requestAnimationFrame(loop);
 
 // map the controls to the UI 
-function reducer(state: State, dt: number): State {
+function reduceState(state: State, dt: number): State {
 
 
     // update the state with the new controls

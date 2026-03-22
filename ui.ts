@@ -27,6 +27,7 @@ class UI {
         this.actions = [];
     }
     constructor() {
+        this.heater_slider.value = "0".toString();
         this.heater_slider.addEventListener("change", (event) => {
             const target = event.target as HTMLInputElement;
             const newValue = Number(target.value);
