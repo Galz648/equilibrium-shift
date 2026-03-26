@@ -8,23 +8,33 @@ class UI {
     updateHeaterDisplay(newValue: number) {
         this.heater_value!.textContent = `${newValue} W`;
     }
-    updateTemperature(newValue: number) {
+    updateTemperatureGauge(newValue: number) {
         this.temperature_gauge!.textContent = `${newValue} K`;
     }
     // update(state: State) {
     //     this.updateHeaterDisplay(state.controls.heater);
-    //     this.updateTemperature(state.temperature);
+    //     this.updateTemperatureGauge(state.temperature);
     // }
 
     constructor() {
         this.heater_slider.value = "0"
         getStore().subscribe((state: State) => {
-            this.heater_slider.value = (state.controls.heater).toString()
+            this.updateHeaterDisplay(state.controls.heater)
+        })
+
+        getStore().subscribe((state: State) => {
+            this.updateTemperatureGauge(state.temperature)
         })
         this.heater_slider.addEventListener("change", (event) => {
             const target = event.target as HTMLInputElement;
             const newValue = Number(target.value);
-            dispatch({ type: "update_heater", payload: { heater: newValue } });
+            dispatch({
+                type: "update_heater", payload: {
+                    controls: {
+                        heater: newValue
+                    }
+                }
+            });
         });
     }
 }

@@ -17,5 +17,8 @@
   "scripts": {
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"
+  },
+  "dependencies": {
+    "ammonia-reaction-simulation": "/Users/galzafar/Documents/GitHub/ammonia-reaction-simulation"
   }
 }

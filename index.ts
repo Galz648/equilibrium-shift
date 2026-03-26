@@ -1,4 +1,3 @@
-import { reduceState, reduceControls, physicsUpdate } from "./state";
 import { store } from "./store";
 import UI from "./ui";
 
@@ -17,7 +16,7 @@ function loop(now: number) {
     // physics update
     store.tick(dt)
 
-    console.log("state", store.getState());
+    // console.log("state", store.getState());
     requestAnimationFrame(loop);
 }
 

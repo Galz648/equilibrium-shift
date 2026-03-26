@@ -2,11 +2,11 @@
 
 interface Action {
     type: ActionType;
-    payload: Partial<Controls>;
+    payload: Partial<State>;
 }
 
 
-type ActionType = "update_heater";
+type ActionType = "update_heater" | "increment_time" | "change_temperature" | "TICK"
 interface Controls {
     heater: number;
 }
