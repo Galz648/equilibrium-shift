@@ -1,4 +1,4 @@
-import { type State, type Controls, type Action } from "./state";
+import { ActionType, type State } from "./state";
 import { dispatch, getStore } from "./store";
 
 class UI {
@@ -29,11 +29,7 @@ class UI {
             const target = event.target as HTMLInputElement;
             const newValue = Number(target.value);
             dispatch({
-                type: "update_heater", payload: {
-                    controls: {
-                        heater: newValue
-                    }
-                }
+                type: ActionType.SET_HEATER, value: newValue
             });
         });
     }

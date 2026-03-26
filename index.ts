@@ -7,7 +7,6 @@ import UI from "./ui";
 const ui = new UI();
 let last = performance.now();
 
-// the controls variables that we want to change if changed by the user
 
 // update 
 function loop(now: number) {

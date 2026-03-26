@@ -1,4 +1,5 @@
-import type { Action, State } from "./state"
+import { ActionType, type Action, type State } from "./state"
+import { isDefined } from "./utils"
 
 export function getStore() {
     return store
@@ -9,31 +10,12 @@ function createStore(initialState: State) {
     const listeners: callback[] = []
     return {
         tick(dt: number) {
-            const temperatureLoss = state.temperature * 0.01 * dt;
-
-            // state.temperature = Math.max(0, state.temperature - temperatureLoss)
-            // state.time += dt
-            dispatch({
-                type: "increment_time", // TODO: refactor into an enum
-                payload: {
-                    time: dt,
-                }
-            })
 
             dispatch({
-                type: "change_temperature", // TODO: refactor into an enum
-                payload: {
-                    temperature: -temperatureLoss,
-                }
-
-
+                type: ActionType.INCREMENT_TIME,
+                value: dt
             })
-            dispatch({
-                type: "change_temperature", payload: {
-                    temperature: state.controls.heater
-                }
-            })
-            // TODO: determine if this will create recursion, a form of overflow
+
 
         },
         getState: () => state,
@@ -47,29 +29,32 @@ function createStore(initialState: State) {
     }
 }
 // TODO: type the action
-export function dispatch(action: Action) {
+export function dispatch(action: Action): void {
     const current_state = getStore().getState()
     // call the reducer function with the current state
-    const new_state = reducer(action, state)
+    const new_state = reducer(action, current_state)
     // notify the listeners 
     getStore().notify(new_state)
+
+
+
 }
 
 function reducer(action: Action, state: State): State {
     console.log(action)
+
     switch (action.type) {
         // TODO: convert the action type string to an enum
-        case ("update_heater"):
+        case (ActionType.SET_HEATER):
             // TODO: should actually be given a payload of how much to increase the heater value
-            state.controls.heater = action.payload.controls?.heater // TODO: add a check that this exists
-            console.log("Should update the heater value (controls)")
+            state.controls.heater = action.value
             break
-        case "increment_time":
-            state.time += action.payload.time // TODO: make sure this exists
+        case ActionType.INCREMENT_TIME:
+            state.time += action.value
             break
 
-        case "change_temperature":
-            state.temperature += action.payload.temperature
+        case ActionType.CHANGE_TEMPERATURE:
+            state.temperature += action.value
 
     }
 

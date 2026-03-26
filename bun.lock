@@ -6,6 +6,7 @@
       "name": "equilibrium",
       "dependencies": {
         "ammonia-reaction-simulation": "/Users/galzafar/Documents/GitHub/ammonia-reaction-simulation",
+        "ammonia-reaction-simulation": "/Users/galzafar/Documents/GitHub/ammonia-reaction-simulation",
       },
       "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -13,7 +14,6 @@
         "eslint": "^10.1.0",
         "globals": "^17.4.0",
         "jiti": "^2.6.1",
-        "typescript-eslint": "^8.57.2",
       },
       "peerDependencies": {
         "typescript": "^6.0.2",
@@ -83,7 +83,9 @@
 
     "ajv": ["ajv@6.14.0", "", { "dependencies": { "fast-deep-equal": "^3.1.1", "fast-json-stable-stringify": "^2.0.0", "json-schema-traverse": "^0.4.1", "uri-js": "^4.2.2" } }, "sha512-IWrosm/yrn43eiKqkfkHis7QioDleaXQHdDVPKg0FSwwd/DuvyX79TZnFOnYpB7dcsFAMmtFztZuXPDvSePkFw=="],
 
-    "ammonia-reaction-simulation": ["ammonia-reaction-simulation@file:../ammonia-reaction-simulation", { "dependencies": { "chart.js": "^4.5.1", "jiti": "^2.6.1" }, "devDependencies": { "@eslint/js": "^10.0.1", "@types/bun": "latest", "@typescript-eslint/eslint-plugin": "^8.57.2", "@typescript-eslint/parser": "^8.57.2", "eslint": "^10.1.0", "globals": "^17.4.0", "typescript-eslint": "^8.57.2" }, "peerDependencies": { "typescript": "^5.9.3" } }],
+    "ammonia-reaction-simulation": ["ammonia-reaction-simulation@file:../ammonia-reaction-simulation", { "dependencies": { "chart.js": "^4.5.1", "jiti": "^2.6.1" }, "devDependencies": { "@eslint/js": "^10.0.1", "@types/bun": "latest", "@typescript-eslint/eslint-plugin": "^8.57.2", "@typescript-eslint/parser": "^8.57.2", "eslint": "^10.1.0", "globals": "^17.4.0", "typescript-eslint": "^8.57.2" }, "peerDependencies": { "typescript": "^6.0.2" } }],
+
+    "ammonia-reaction-simulation": ["ammonia-reaction-simulation@file:../ammonia-reaction-simulation", { "dependencies": { "chart.js": "^4.5.1", "jiti": "^2.6.1" }, "devDependencies": { "@eslint/js": "^10.0.1", "@types/bun": "latest", "@typescript-eslint/eslint-plugin": "^8.57.2", "@typescript-eslint/parser": "^8.57.2", "eslint": "^10.1.0", "globals": "^17.4.0", "typescript-eslint": "^8.57.2" }, "peerDependencies": { "typescript": "^6.0.2" } }],
 
     "balanced-match": ["balanced-match@4.0.4", "", {}, "sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA=="],
 
