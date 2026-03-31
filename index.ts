@@ -1,15 +1,13 @@
 
-import { stepHaberBoschReaction } from "ammonia-reaction-simulation";
+import { updateSimulationTime, stepHaberBoschReaction } from "ammonia-reaction-simulation";
 import type { ReactorState, SimulatorState, Conditions } from "ammonia-reaction-simulation";
-import { store } from "./store";
-import UI from "./ui";
-
-
+import UI from "./src/ui";
+import { createStore } from "./src/store";
 
 
 
 // Setup 
-const ui = new UI();
+
 let last = performance.now();
 
 // initial conditions
@@ -29,23 +27,35 @@ const simulator_state: SimulatorState = {
 }
 let conditions: Conditions = {
     simulator_state,
-    reactor_state
+    reactor_state,
+    controls: {
+        heat_input: 50
+    }
 }
+export const store = createStore(conditions)
+const ui = new UI(store); // TODO: replicate store initialization logic here - move UI() instantiation to ui.ts file
+
+
+
 // update 
 function loop(now: number) {
     const dt = (now - last) / 1000; // seconds
     last = now;
-    // physics update
-    store.tick(dt)
-    conditions.simulator_state = { // have the timing and tick time cotrolled by the application rather than by the simulation
-        ...simulator_state,
-        t: now,
-        dt,
-    }
+
+
+    // TODO: check if the sequence of actions makes sense
+    conditions.simulator_state = conditions.simulator_state = updateSimulationTime(conditions.simulator_state, now, dt)
     conditions = stepHaberBoschReaction(conditions)
+    store.tick(dt) // TODO: consider placing this call after the step simulation function
     console.log(`time: ${conditions.simulator_state.t}`)
     // console.log("state", store.getState());
     requestAnimationFrame(loop);
 }
 
+
+// TODO: get the new ui controls state from the store and update the simulation `Conditions`
+store.subscribe((state: Conditions) => {
+    console.log(`conditions updated by store: ${JSON.stringify(state)}`)
+    conditions = state
+})
 requestAnimationFrame(loop);

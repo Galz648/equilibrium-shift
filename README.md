@@ -2,7 +2,11 @@
 
 ### TODOs:
 
-- [] - consolidate between the requestAnimationFrame time, and the simulation time
+- [x] consolidate between the requestAnimationFrame time, and the simulation
+      time
+- [ ] modify state store to use the Conditions type to represent internal state
+      of the simulation + reactor. when the store notifies the listeners, it
+      should map the Conditions type to the ControlsState type.
 
 ### System Components
 

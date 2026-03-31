@@ -25,7 +25,6 @@
     <div class="container">
         <div class="panel" id="reactor">
             <label for="temperature-gauge">Temperature: </label>
-            <!-- INSERT_YOUR_CODE -->
             <p>
                 N<sub>2</sub>(g) + 3 H<sub>2</sub>(g)
                 &#8652; 2 NH<sub>3</sub>(g)
@@ -34,10 +33,13 @@
                 (Ammonia synthesis: exothermic, reversible, equilibrium reaction)
             </small>
             <h1 id="temperature-gauge">0</h1>
+            <p id="H2"> </p>
+            <p id="N2"> </p>
+            <p id="NH3"> </p>
             <!-- <canvas></canvas>
             <div class="controls">...</div> -->
         </div>
-        <div class="panel" id="heater">
+        <div class="panel" id="controls">
             <label for="heater-slider">Heat</label>
             <input id="heater-slider" type="range" min="0" max="100" value="50">
             <h1 id="clock"></h1>
