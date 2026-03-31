@@ -1,7 +1,8 @@
 # equilibrium
 
+### TODOs:
 
-
+- [] - consolidate between the requestAnimationFrame time, and the simulation time
 
 ### System Components
 
