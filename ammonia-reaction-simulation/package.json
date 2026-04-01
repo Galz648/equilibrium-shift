@@ -1,0 +1,28 @@
+{
+  "name": "ammonia-reaction-simulation",
+  "version": "0.2.0",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "lint": "bun run eslint",
+    "fix": "bun run eslint --fix"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "latest",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
+    "chart.js": "^4.5.1",
+    "eslint": "^10.1.0",
+    "globals": "^17.4.0",
+    "typescript-eslint": "^8.57.2"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "jiti": "^2.6.1"
+  }
+}

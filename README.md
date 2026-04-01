@@ -1,7 +1,7 @@
 # equilibrium
 
 ### TODOs:
-
+- [ ] separate the UI elements into different objects, that relate store changes to UI changes through callbacks, basically encapsulating the current logic into an object, mimicing the react like declarative element approach (hopefully)
 - [x] consolidate between the requestAnimationFrame time, and the simulation
       time
 - [ ] modify state store to use the Conditions type to represent internal state
