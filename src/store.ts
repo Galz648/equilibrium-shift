@@ -1,9 +1,9 @@
 import { ActionType, type Action } from "./state"
-import type { Conditions, Controls } from "ammonia-reaction-simulation"
+import type { Conditions } from "ammonia-reaction-simulation"
 
 type callback = (state: Conditions) => void
 export interface Store {
-    tick(dt: number): void
+    tick(dt: number, conditions: Conditions): void
     getState(): Conditions
     notify(state: Conditions): void
     subscribe(callback: callback): void
@@ -12,13 +12,27 @@ export function createStore(initialState: Conditions): Store {
     let state: Conditions = initialState
     const listeners: callback[] = []
     return {
-        tick(dt: number) {
+        tick(dt: number, conditions: Conditions) {
 
             dispatch({
-                type: ActionType.INCREMENT_TIME,
-                value: dt
+                type: ActionType.UPDATE_SIMULATOR,
+                value: conditions.simulator_state,
+                name: "UPDATE_SIMULATOR"
+            }, this)
+            dispatch({
+                type: ActionType.UPDATE_REACTOR,
+                value: conditions.reactor_state,
+                name: "UPDATE_REACTOR"
             }, this)
 
+            // // NOTE: The increment time action is the last action to be dispatched,
+            // // because it updates the internal time of the simulator state
+            // // 
+            dispatch({
+                type: ActionType.INCREMENT_TIME,
+                value: dt,
+                name: "INCREMENT_TIME"
+            }, this)
 
         },
 
@@ -44,41 +58,27 @@ export function dispatch(action: Action, store: Store): void {
 }
 
 function reducer(action: Action, state: Conditions): Conditions {
-    console.log(action)
+    console.log(action.name)
 
     switch (action.type) {
-        // TODO: convert the action type string to an enum
         case (ActionType.SET_HEATER):
-            // TODO: should actually be given a payload of how much to increase the heater value
             state.controls.heat_input = action.value
             break
         case ActionType.INCREMENT_TIME:
             state.simulator_state.t += action.value
+            state.simulator_state.dt = action.value
             break
-
-
+        case ActionType.UPDATE_SIMULATOR:
+            state.simulator_state = action.value
+            break
+        case ActionType.UPDATE_REACTOR:
+            state.reactor_state = action.value
+            break
+        default:
+            // TODO: consider using a more descriptive error message, handle the error gracefully using a rust like Result type
+            throw new Error(`Unknown action : ${JSON.stringify(action)}`)
     }
 
     return state
 }
-// const state: Conditions = { // TODO: 
-//     simulator_state: {
-//         t: 0,
-//         dt: 0,
-//         dH2: 0,
-//         dNH3: 0,
-//         dN2: 0,
-//         dT: 0,
-//     },
-//     reactor_state: {
-//         N2: 0,
-//         H2: 0,
-//         NH3: 0,
-//         T: 298,
-//     },
-//     controls: {
-//         heat_input: 50,
-//     },
-// };
-
 
