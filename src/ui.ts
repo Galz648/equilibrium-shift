@@ -50,7 +50,7 @@ class ClockUI implements UIComponent {
     }
 
     updateClock(time: number) {
-        this.clock.textContent = `t(s): ${time}`;
+        this.clock.textContent = `t(s): ${Number(time).toFixed(2)}`;
     }
 
     subscribe(store: Store): void {
@@ -74,13 +74,13 @@ class ReactorUI implements UIComponent {
     }
 
     updateTemperatureGauge(newValue: number) {
-        this.temperature_gauge!.textContent = `${newValue} K`;
+        this.temperature_gauge!.textContent = `${Number(newValue).toFixed(2)} K`;
     }
 
     updateConcentrations(state: Conditions) {
-        this.H2.textContent = `${state.reactor_state.H2} n(moles)`;
-        this.N2.textContent = `${state.reactor_state.N2} n(moles)`;
-        this.NH3.textContent = `${state.reactor_state.NH3} n(moles)`;
+        this.H2.textContent = `H_2: ${Number(state.reactor_state.H2).toFixed(2)} n(moles)`;
+        this.N2.textContent = `N_2: ${Number(state.reactor_state.N2).toFixed(2)} n(moles)`;
+        this.NH3.textContent = `NH_3: ${Number(state.reactor_state.NH3).toFixed(2)} n(moles)`;
     }
 
     subscribe(store: Store): void {
