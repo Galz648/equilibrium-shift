@@ -1,0 +1,237 @@
+/* Ammonia equilibrium simulation — app shell */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100%;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #e8eaed;
+    background: radial-gradient(120% 100% at 50% 0%, #1a2332 0%, #0d1117 55%, #070a0e 100%);
+}
+
+.app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.layout {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    min-height: 0;
+}
+
+.panel {
+    flex: 1;
+    min-width: 0;
+    padding: clamp(1rem, 3vw, 1.75rem);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: rgba(13, 17, 23, 0.35);
+    backdrop-filter: blur(8px);
+}
+
+.panel:last-child {
+    border-right: none;
+}
+
+.panel__title {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8b949e;
+}
+
+.equation {
+    margin: 0;
+    font-size: 1.125rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.equation-note {
+    margin: 0;
+    color: #8b949e;
+    font-size: 0.8125rem;
+    max-width: 36ch;
+}
+
+.metric {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.metric--hero {
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    color: #58a6ff;
+}
+
+/* Concentrations sub-panel */
+
+.concentrations-panel {
+    margin-top: 0.25rem;
+    padding: 1rem 1rem 1.125rem;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.concentrations-panel__title {
+    margin: 0 0 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #8b949e;
+}
+
+.concentrations {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.concentration {
+    display: grid;
+    grid-template-columns: minmax(4.5rem, auto) 1fr auto;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    font-variant-numeric: tabular-nums;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-left-width: 3px;
+}
+
+.concentration__label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #c9d1d9;
+}
+
+.concentration__label sub {
+    font-size: 0.75em;
+}
+
+.concentration__metric {
+    justify-self: end;
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #f0f6fc;
+    min-width: 5.5ch;
+    text-align: right;
+}
+
+.concentration__unit {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #8b949e;
+    text-transform: lowercase;
+}
+
+.concentration--h2 {
+    border-left-color: rgba(88, 166, 255, 0.85);
+}
+
+.concentration--n2 {
+    border-left-color: rgba(163, 113, 247, 0.9);
+}
+
+.concentration--nh3 {
+    border-left-color: rgba(126, 231, 135, 0.9);
+}
+
+.concentration--h2 .concentration__label {
+    color: #79c0ff;
+}
+
+.concentration--n2 .concentration__label {
+    color: #d2a8ff;
+}
+
+.concentration--nh3 .concentration__label {
+    color: #7ee787;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.control-group label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #8b949e;
+}
+
+.control-group input[type="range"] {
+    width: 100%;
+    max-width: 320px;
+    accent-color: #f78166;
+    cursor: pointer;
+}
+
+.clock-display {
+    margin: 0;
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #7ee787;
+}
+
+.heater-display {
+    margin: 0;
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #f78166;
+}
+
+.aux-value {
+    font-size: 0.875rem;
+    color: #8b949e;
+}
+
+@media (max-width: 640px) {
+    .layout {
+        flex-direction: column;
+    }
+
+    .panel {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .panel:last-child {
+        border-bottom: none;
+    }
+}

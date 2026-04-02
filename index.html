@@ -1,55 +1,61 @@
-<html>
+<html lang="en">
 
 <head>
-    <style>
-        .container {
-            display: flex;
-            flex-direction: row;
-            height: 100vh;
-        }
-
-        .panel {
-            flex: 1;
-            border-right: 1px solid #ccc;
-            padding: 1em;
-            box-sizing: border-box;
-        }
-
-        .panel:last-child {
-            border-right: none;
-        }
-    </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ammonia equilibrium</title>
+    <link rel="stylesheet" href="styles.css" />
 </head>
 
-<body>
-    <div class="container">
-        <div class="panel" id="reactor">
-            <label for="temperature-gauge">Temperature: </label>
-            <p>
+<body class="app">
+    <div class="layout">
+        <main class="panel" id="reactor" aria-labelledby="reactor-heading">
+            <h2 class="panel__title" id="reactor-heading">Reactor</h2>
+            <p class="equation">
                 N<sub>2</sub>(g) + 3 H<sub>2</sub>(g)
                 &#8652; 2 NH<sub>3</sub>(g)
             </p>
-            <small>
-                (Ammonia synthesis: exothermic, reversible, equilibrium reaction)
-            </small>
-            <h1 id="temperature-gauge">0</h1>
-            <p id="H2"></p>
-            <p id="N2"> </p>
-            <p id="NH3"> </p>
+            <p class="equation-note">
+                Ammonia synthesis: exothermic, reversible, equilibrium reaction.
+            </p>
+            <p class="metric metric--hero" id="temperature-gauge" aria-label="Temperature in kelvin">0</p>
+            <section class="concentrations-panel" aria-labelledby="conc-heading">
+                <h3 class="concentrations-panel__title" id="conc-heading">Mole amounts</h3>
+                <ul class="concentrations" aria-label="Species mole amounts">
+                    <li class="concentration concentration--h2">
+                        <span class="concentration__label">H<sub>2</sub></span>
+                        <span class="concentration__metric" id="H2">—</span>
+                        <span class="concentration__unit">mol</span>
+                    </li>
+                    <li class="concentration concentration--n2">
+                        <span class="concentration__label">N<sub>2</sub></span>
+                        <span class="concentration__metric" id="N2">—</span>
+                        <span class="concentration__unit">mol</span>
+                    </li>
+                    <li class="concentration concentration--nh3">
+                        <span class="concentration__label">NH<sub>3</sub></span>
+                        <span class="concentration__metric" id="NH3">—</span>
+                        <span class="concentration__unit">mol</span>
+                    </li>
+                </ul>
+            </section>
             <!-- <canvas></canvas>
             <div class="controls">...</div> -->
-        </div>
-        <div class="panel" id="controls">
-            <label for="heater-slider">Heat</label>
-            <input id="heater-slider" type="range" min="0" max="100" value="">
-            <h1 id="clock"></h1>
-            <h1 id="heater-value"></h1>
-            <span id="value"></span>
+        </main>
+        <aside class="panel" id="controls" aria-labelledby="controls-heading">
+            <h2 class="panel__title" id="controls-heading">Controls</h2>
+            <div class="control-group">
+                <label for="heater-slider">Heat input</label>
+                <input id="heater-slider" type="range" min="0" max="100" value="" />
+            </div>
+            <p class="clock-display" id="clock"></p>
+            <p class="heater-display" id="heater-value"></p>
+            <span class="aux-value" id="value"></span>
             <!-- <canvas></canvas>
             <div class="controls">...</div> -->
-        </div>
+        </aside>
     </div>
-    <script src="index.ts"></script>
+    <script src="index.ts" type="module"></script>
 </body>
 
 </html>

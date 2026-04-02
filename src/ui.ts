@@ -78,9 +78,9 @@ class ReactorUI implements UIComponent {
     }
 
     updateConcentrations(state: Conditions) {
-        this.H2.textContent = `H_2: ${Number(state.reactor_state.H2).toFixed(2)} n(moles)`;
-        this.N2.textContent = `N_2: ${Number(state.reactor_state.N2).toFixed(2)} n(moles)`;
-        this.NH3.textContent = `NH_3: ${Number(state.reactor_state.NH3).toFixed(2)} n(moles)`;
+        this.H2.textContent = Number(state.reactor_state.H2).toFixed(2);
+        this.N2.textContent = Number(state.reactor_state.N2).toFixed(2);
+        this.NH3.textContent = Number(state.reactor_state.NH3).toFixed(2);
     }
 
     subscribe(store: Store): void {

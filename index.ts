@@ -12,8 +12,8 @@ let last = performance.now();
 
 // initial conditions
 const reactor_state: ReactorState = {
-    N2: 1,
-    H2: 3,
+    N2: 0,
+    H2: 0,
     NH3: 0,
     T: 298
 }
