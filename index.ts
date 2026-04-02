@@ -1,8 +1,9 @@
 
 import { updateSimulationTime, stepHaberBoschReaction } from "ammonia-reaction-simulation";
-import type { ReactorState, SimulatorState, Conditions } from "ammonia-reaction-simulation";
+import type { ReactorState, SimulatorState, Conditions, Controls } from "ammonia-reaction-simulation";
 import UI from "./src/ui";
 import { createStore } from "./src/store";
+import { createInitialConditions } from "./ammonia-reaction-simulation/src/simulate";
 
 
 
@@ -11,28 +12,11 @@ import { createStore } from "./src/store";
 let last = performance.now();
 
 // initial conditions
-const reactor_state: ReactorState = {
-    N2: 1,
-    H2: 3,
-    NH3: 0,
-    T: 298
-}
-const simulator_state: SimulatorState = {
-    t: 0,
-    dt: 0,
-    dH2: 0,
-    dNH3: 0,
-    dN2: 0,
-    dT: 0
-}
-let conditions: Conditions = {
-    simulator_state,
-    reactor_state,
-    controls: {
-        heat_input: 0
+export const store = createStore(createInitialConditions({
+    reactor_state: {
+        T: 400
     }
-}
-export const store = createStore(conditions)
+} as Partial<Conditions>))
 const ui = new UI(store); // TODO: replicate store initialization logic here - move UI() instantiation to ui.ts file
 
 

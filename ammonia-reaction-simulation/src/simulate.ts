@@ -20,7 +20,44 @@ function arrayToState(arr: ReactorStateArray): ReactorState {
     return { N2, H2, NH3, T }
 }
 
-
+function createInitialConditions(conditions_to_change: Partial<Conditions>): Conditions {
+    const FRAME_RATE = 60; // frames per second
+    const TIMESTEP = 1 / FRAME_RATE; // seconds
+    const standard_conditions: Conditions = {
+        simulator_state: {
+            t: 0,
+            // Default integration step for RK4; tests and callers that omit dt would otherwise integrate over zero time.
+            dt: TIMESTEP, // NOTE: this is the default integration step for RK4
+            dH2: 0,
+            dNH3: 0,
+            dN2: 0,
+            dT: 0,
+        },
+        reactor_state: {
+            N2: 0,
+            H2: 0,
+            NH3: 0,
+            T: 298
+        },
+        controls: {
+            heat_input: 0
+        }
+    }
+    return {
+        simulator_state: {
+            ...standard_conditions.simulator_state,
+            ...conditions_to_change.simulator_state,
+        },
+        reactor_state: {
+            ...standard_conditions.reactor_state,
+            ...conditions_to_change.reactor_state,
+        },
+        controls: {
+            ...standard_conditions.controls,
+            ...conditions_to_change.controls,
+        }
+    }
+}
 function updateSimulationTime(simulator_state: SimulatorState, t: number, dt: number): SimulatorState {
     return {
         ...simulator_state,
@@ -45,6 +82,37 @@ function equilibriumConstant(deltaG_kJ: number, T: number) {
 
 function reactionQuotient(N2: number, H2: number, NH3: number) {
     return (NH3 ** 2) / (N2 * (H2 ** 3))
+}
+
+/** Thermodynamic snapshot for UI/diagnostics; uses the same ΔG°, K, and Q definitions as the integration. */
+type ReactorDiagnostics = {
+    deltaG_kJ: number
+    K_eq: number
+    Q: number | null
+    direction: "forward" | "reverse" | "equilibrium" | "n/a"
+    totalMoles: number
+}
+
+function computeReactorDiagnostics(reactor: ReactorState): ReactorDiagnostics {
+    const T = reactor.T
+    const dG = deltaG(T)
+    const K_eq = Math.exp(-dG / (R * T))
+    const { N2, H2, NH3 } = reactor
+    const canQuotient = N2 > 0 && H2 > 0
+    const Q = canQuotient ? reactionQuotient(N2, H2, NH3) : null
+    let direction: ReactorDiagnostics["direction"] = "n/a"
+    if (Q !== null && Number.isFinite(Q)) {
+        if (K_eq > Q) direction = "forward"
+        else if (K_eq < Q) direction = "reverse"
+        else direction = "equilibrium"
+    }
+    return {
+        deltaG_kJ: dG,
+        K_eq,
+        Q,
+        direction,
+        totalMoles: N2 + H2 + NH3,
+    }
 }
 
 function deltaG(T: number) {
@@ -77,10 +145,20 @@ function wrappedDerivatives(controls: Controls): derive {
         const results = [dN2, dH2, dNH3, dT] as ReactorStateArray
 
         if (results.some(x => !Number.isFinite(x))) {
-            console.log("bad derivative", { t, results })
+            console.log("bad derivative", { t, s })
             throw new Error("NaN in derivative")
         }
         return results
+    }
+}
+
+function clampReactorState(reactor_state: ReactorState): ReactorState {
+    return {
+        ...reactor_state,
+        T: Math.max(reactor_state.T, 0),
+        N2: Math.max(reactor_state.N2, 0),
+        H2: Math.max(reactor_state.H2, 0),
+        NH3: Math.max(reactor_state.NH3, 0),
     }
 }
 // simulation
@@ -90,9 +168,11 @@ export function updateReactorState(conditions: Conditions): ReactorState {
 
     const reactor_state = rk4(derivatives, state_arr as State, conditions.simulator_state.t, conditions.simulator_state.dt)
 
+    // clamping the reactor state to be positive (no negative concentrations, no negative temperature)
+    const clamped_reactor_state = clampReactorState(arrayToState(reactor_state)) // this is the final reactor state to be returned
 
-    const s = arrayToState(reactor_state)
-    return s
+
+    return clamped_reactor_state
 }
 
 
@@ -121,7 +201,7 @@ function stepHaberBoschReaction(conditions: Conditions): Conditions {
         `\tk_c: ${k_c}`
     );
 
-    conditions.reactor_state = updateReactorState(conditions)
+    conditions.reactor_state = clampReactorState(updateReactorState(conditions))
     conditions.simulator_state = updateSimulationState(conditions.simulator_state)
 
     assertValidReactorState(conditions.reactor_state)
@@ -190,8 +270,11 @@ export function rk4( // An implementation of the rk4 algorithm - 4th order ODE n
 }
 
 export {
+    computeReactorDiagnostics,
     stepHaberBoschReaction,
     updateSimulationTime,
+    createInitialConditions,
     type Conditions,
     type Controls,
+    type ReactorDiagnostics,
 }

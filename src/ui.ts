@@ -1,6 +1,27 @@
-import type { Conditions } from "ammonia-reaction-simulation";
+import { type Conditions, computeReactorDiagnostics } from "../ammonia-reaction-simulation/src/simulate";
 import { ActionType } from "./state";
 import { dispatch, type Store } from "./store";
+
+function formatSci(n: number): string {
+    if (!Number.isFinite(n)) return "—";
+    const a = Math.abs(n);
+    if (a === 0) return "0";
+    if (a >= 1e4 || a < 1e-2) return n.toExponential(3);
+    return n.toPrecision(4);
+}
+
+function directionLabel(direction: ReturnType<typeof computeReactorDiagnostics>["direction"]): string { // TODO: change this AI slop
+    switch (direction) {
+        case "forward":
+            return "Toward NH₃";
+        case "equilibrium":
+            return "At equilibrium";
+        case "reverse":
+            return "Toward N₂ + H₂";
+        default:
+            return "—";
+    }
+}
 
 interface UIComponent {
     store: Store
@@ -38,27 +59,6 @@ class HeaterUI implements UIComponent {
     }
 }
 
-// Clock UI: handles time display
-class ClockUI implements UIComponent {
-    store: Store;
-    clock = document.getElementById("clock") as HTMLElement;
-
-    constructor(store: Store) {
-        this.store = store;
-        this.clock.textContent = "0";
-        this.subscribe(this.store);
-    }
-
-    updateClock(time: number) {
-        this.clock.textContent = `t(s): ${Number(time).toFixed(2)}`;
-    }
-
-    subscribe(store: Store): void {
-        store.subscribe((state: Conditions) => {
-            this.updateClock(state.simulator_state.t);
-        });
-    }
-}
 
 // Reactor UI: handles temp gauge and concentration displays
 class ReactorUI implements UIComponent {
@@ -78,9 +78,9 @@ class ReactorUI implements UIComponent {
     }
 
     updateConcentrations(state: Conditions) {
-        this.H2.textContent = `H_2: ${Number(state.reactor_state.H2).toFixed(2)} n(moles)`;
-        this.N2.textContent = `N_2: ${Number(state.reactor_state.N2).toFixed(2)} n(moles)`;
-        this.NH3.textContent = `NH_3: ${Number(state.reactor_state.NH3).toFixed(2)} n(moles)`;
+        this.H2.textContent = Number(state.reactor_state.H2).toFixed(2);
+        this.N2.textContent = Number(state.reactor_state.N2).toFixed(2);
+        this.NH3.textContent = Number(state.reactor_state.NH3).toFixed(2);
     }
 
     subscribe(store: Store): void {
@@ -93,15 +93,51 @@ class ReactorUI implements UIComponent {
     }
 }
 
+/** Simulation / equilibrium readout (integrator step, K, Q, net direction). */
+class SimulationStateUI implements UIComponent {
+    store: Store;
+    elT = document.getElementById("sim-state-t") as HTMLElement;
+    elDt = document.getElementById("sim-state-dt") as HTMLElement;
+    elDg = document.getElementById("sim-state-dg") as HTMLElement;
+    elK = document.getElementById("sim-state-k") as HTMLElement;
+    elQ = document.getElementById("sim-state-q") as HTMLElement;
+    elDirection = document.getElementById("sim-state-direction") as HTMLElement;
+    elMoles = document.getElementById("sim-state-moles") as HTMLElement;
+
+    constructor(store: Store) {
+        this.store = store;
+        this.subscribe(this.store);
+    }
+
+    update(state: Conditions): void {
+        const { t, dt } = state.simulator_state;
+        this.elT.textContent = `${Number(t).toFixed(2)} s`;
+        this.elDt.textContent = `${Number(dt).toFixed(4)} s`;
+
+        const d = computeReactorDiagnostics(state.reactor_state);
+        this.elDg.textContent = `${d.deltaG_kJ.toFixed(1)} kJ/mol`;
+        this.elK.textContent = formatSci(d.K_eq);
+        this.elQ.textContent = d.Q !== null && Number.isFinite(d.Q) ? formatSci(d.Q) : "—";
+        this.elDirection.textContent = directionLabel(d.direction);
+        this.elMoles.textContent = `${d.totalMoles.toFixed(3)} mol`;
+    }
+
+    subscribe(store: Store): void {
+        store.subscribe((state: Conditions) => {
+            this.update(state);
+        });
+    }
+}
+
 // Optionally, you can create a UI class that instantiates all components for convenience
 class UI {
     heaterUI: HeaterUI;
-    clockUI: ClockUI;
     reactorUI: ReactorUI;
+    simulationStateUI: SimulationStateUI;
     constructor(store: Store) {
         this.heaterUI = new HeaterUI(store);
-        this.clockUI = new ClockUI(store);
         this.reactorUI = new ReactorUI(store);
+        this.simulationStateUI = new SimulationStateUI(store);
     }
 }
 
