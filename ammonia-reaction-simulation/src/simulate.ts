@@ -187,26 +187,18 @@ function assertValidReactorState(state: ReactorState): void {
 
 }
 function stepHaberBoschReaction(conditions: Conditions): Conditions {
-    const k_c = equilibriumConstant(deltaG(conditions.reactor_state.T), conditions.reactor_state.T)
-    const Q = reactionQuotient(conditions.reactor_state.N2, conditions.reactor_state.H2, conditions.reactor_state.NH3)
+    // Copy so callers (e.g. the app store) are not mutated in place — avoids aliased history and stale UI reads.
+    const next: Conditions = {
+        controls: { ...conditions.controls },
+        reactor_state: { ...conditions.reactor_state },
+        simulator_state: { ...conditions.simulator_state },
+    }
+    next.reactor_state = clampReactorState(updateReactorState(next))
+    next.simulator_state = updateSimulationState(next.simulator_state)
 
+    assertValidReactorState(next.reactor_state)
 
-    console.log(
-        `t: ${conditions.simulator_state.t}\n` +
-        `\tN2: ${conditions.reactor_state.N2}\n` +
-        `\tH2: ${conditions.reactor_state.H2}\n` +
-        `\tNH3: ${conditions.reactor_state.NH3}\n` +
-        `\tT: ${conditions.reactor_state.T}\n` +
-        `\tQ: ${Q}\n` +
-        `\tk_c: ${k_c}`
-    );
-
-    conditions.reactor_state = clampReactorState(updateReactorState(conditions))
-    conditions.simulator_state = updateSimulationState(conditions.simulator_state)
-
-    assertValidReactorState(conditions.reactor_state)
-
-    return conditions
+    return next
 }
 
 enum reactionDirection {

@@ -1,64 +1,45 @@
+import { stepHaberBoschReaction } from "ammonia-reaction-simulation"
 import { ActionType, type Action } from "./state"
 import type { Conditions } from "ammonia-reaction-simulation"
 
 type callback = (state: Conditions) => void
+function appendHistory(simulation_history: Conditions[], state: Conditions): void {
+    simulation_history.push({ ...state })
+}
+
 export interface Store {
-    tick(dt: number, conditions: Conditions): void
+    simulation_history: Conditions[]
     getState(): Conditions
-    notify(state: Conditions): void
+    dispatch(action: Action): void
     subscribe(callback: callback): void
 }
 export function createStore(initialState: Conditions): Store {
-    let state: Conditions = initialState
+    const state: Conditions = initialState
     const listeners: callback[] = []
+    const simulation_history: Conditions[] = [initialState]
+
+    function notify(): void {
+        const snapshot = state
+        listeners.forEach((l) => l(snapshot))
+    }
+
+    function dispatch(action: Action): void {
+        reducer(action, state, simulation_history)
+        notify()
+    }
+
     return {
-        tick(dt: number, conditions: Conditions) {
-
-            dispatch({
-                type: ActionType.UPDATE_SIMULATOR,
-                value: conditions.simulator_state,
-                name: "UPDATE_SIMULATOR"
-            }, this)
-            dispatch({
-                type: ActionType.UPDATE_REACTOR,
-                value: conditions.reactor_state,
-                name: "UPDATE_REACTOR"
-            }, this)
-
-            // // NOTE: The increment time action is the last action to be dispatched,
-            // // because it updates the internal time of the simulator state
-            // // 
-            dispatch({
-                type: ActionType.INCREMENT_TIME,
-                value: dt,
-                name: "INCREMENT_TIME"
-            }, this)
-
-        },
-
-        getState: () => state,
-        notify(state: Conditions): void {
-            listeners.forEach((l) => l(state))
-        },
+        simulation_history,
+        getState: () => { return { ...state } },
+        dispatch,
         subscribe: (callback: callback) => {
             listeners.push(callback)
         }
 
     }
 }
-export function dispatch(action: Action, store: Store): void {
-    const current_state = store.getState()
-    // call the reducer function with the current state
-    const new_state = reducer(action, current_state)
-    // notify the listeners 
-    store.notify(new_state)
 
-
-
-}
-
-function reducer(action: Action, state: Conditions): Conditions {
-    console.log(action.name)
+function reducer(action: Action, state: Conditions, simulation_history: Conditions[]): Conditions {
 
     switch (action.type) {
         case (ActionType.SET_HEATER):
@@ -74,6 +55,16 @@ function reducer(action: Action, state: Conditions): Conditions {
         case ActionType.UPDATE_REACTOR:
             state.reactor_state = action.value
             break
+        case ActionType.STEP: {
+            const next = stepHaberBoschReaction({
+                ...state,
+                simulator_state: { ...state.simulator_state, dt: action.dt },
+            })
+            state.simulator_state = next.simulator_state
+            state.reactor_state = next.reactor_state
+            appendHistory(simulation_history, state)
+            break
+        }
         default:
             // TODO: consider using a more descriptive error message, handle the error gracefully using a rust like Result type
             throw new Error(`Unknown action : ${JSON.stringify(action)}`)
@@ -81,4 +72,3 @@ function reducer(action: Action, state: Conditions): Conditions {
 
     return state
 }
-

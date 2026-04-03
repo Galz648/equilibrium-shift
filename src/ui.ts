@@ -1,6 +1,23 @@
 import { type Conditions, computeReactorDiagnostics } from "../ammonia-reaction-simulation/src/simulate";
+import { Chart, LinearScale, Title, PointElement, LineController, Legend, LineElement, Tooltip } from "chart.js";
 import { ActionType } from "./state";
-import { dispatch, type Store } from "./store";
+import type { Store } from "./store";
+
+/** Fixed axis bounds so the chart does not rescale as the series updates. */
+const CHART_X_MIN = 0;
+const CHART_X_MAX = 120; // simulation time (s)
+const CHART_Y_MIN = 0;
+const CHART_Y_MAX = 6; // N₂ amount (mol); adjust if your initial conditions exceed this
+
+Chart.register(
+    LineController,
+    LineElement,
+    PointElement,
+    Title,
+    Tooltip,
+    Legend,
+    LinearScale,
+);
 
 function formatSci(n: number): string {
     if (!Number.isFinite(n)) return "—";
@@ -37,14 +54,14 @@ class HeaterUI implements UIComponent {
     constructor(store: Store) {
         this.store = store;
         this.heater_slider.value = "0";
-        this.subscribe(this.store);
+
 
         this.heater_slider.addEventListener("change", (event) => {
             const target = event.target as HTMLInputElement;
             const newValue = Number(target.value);
-            dispatch({
+            this.store.dispatch({
                 type: ActionType.SET_HEATER, value: newValue, name: "SET_HEATER"
-            }, this.store);
+            });
         });
     }
 
@@ -70,7 +87,6 @@ class ReactorUI implements UIComponent {
 
     constructor(store: Store) {
         this.store = store;
-        this.subscribe(this.store);
     }
 
     updateTemperatureGauge(newValue: number) {
@@ -106,7 +122,6 @@ class SimulationStateUI implements UIComponent {
 
     constructor(store: Store) {
         this.store = store;
-        this.subscribe(this.store);
     }
 
     update(state: Conditions): void {
@@ -129,15 +144,132 @@ class SimulationStateUI implements UIComponent {
     }
 }
 
+
+interface Dataset {
+    label: string;
+    type: "line";
+    backgroundColor: string;
+    borderColor: string;
+    data: { x: number, y: number }[];
+    borderWidth: number;
+}
+
+class ChartPlotterUI implements UIComponent {
+    store: Store;
+    chart: Chart;
+    ctx: HTMLCanvasElement;
+
+    constructor(ctx: HTMLCanvasElement, store: Store) {
+        this.store = store;
+
+        this.ctx = ctx;
+        this.chart = new Chart(ctx, {
+            type: "line",
+            data: {
+                datasets: []
+            },
+            options: {
+                parsing: false,
+                animation: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: "top",
+                    },
+                },
+                scales: {
+                    x: {
+                        type: "linear",
+                        min: CHART_X_MIN,
+                        max: CHART_X_MAX,
+                        title: {
+                            display: true,
+                            text: "Time (s)",
+                        },
+                    },
+                    y: {
+                        type: "linear",
+                        min: CHART_Y_MIN,
+                        max: CHART_Y_MAX,
+                        title: {
+                            display: true,
+                            text: "Moles",
+                        },
+                    },
+                },
+            },
+        });
+
+
+    }
+    subscribe(store: Store): void {
+        store.subscribe(() => {
+            this.plot(store.simulation_history);
+        });
+    }
+    setChartData(datasets: Dataset[]): void {
+        this.chart.data.datasets = datasets;
+    }
+    plot(simulation_history: Conditions[]): void {
+        const N2_data = simulation_history.map((p) => ({
+            x: p.simulator_state.t,
+            y: p.reactor_state.N2,
+        }));
+        const H2_data = simulation_history.map((p) => ({
+            x: p.simulator_state.t,
+            y: p.reactor_state.H2,
+        }));
+        const NH3_data = simulation_history.map((p) => ({
+            x: p.simulator_state.t,
+            y: p.reactor_state.NH3,
+        }));
+        this.setChartData([
+            {
+                label: "N₂",
+                type: "line",
+                backgroundColor: "rgba(220, 38, 38, 0.2)",
+                borderColor: "rgb(220, 38, 38)",
+                data: N2_data,
+                borderWidth: 1,
+            },
+            {
+                label: "H₂",
+                type: "line",
+                backgroundColor: "rgba(59, 130, 246, 0.2)",
+                borderColor: "rgb(59, 130, 246)",
+                data: H2_data,
+                borderWidth: 1,
+            },
+            {
+                label: "NH₃",
+                type: "line",
+                backgroundColor: "rgba(16, 185, 129, 0.2)",
+                borderColor: "rgb(16, 185, 129)",
+                data: NH3_data,
+                borderWidth: 1,
+            },
+        ]);
+        this.chart.update("none");
+    }
+}
 // Optionally, you can create a UI class that instantiates all components for convenience
 class UI {
     heaterUI: HeaterUI;
     reactorUI: ReactorUI;
     simulationStateUI: SimulationStateUI;
+    chartPlotterUI: ChartPlotterUI;
     constructor(store: Store) {
         this.heaterUI = new HeaterUI(store);
         this.reactorUI = new ReactorUI(store);
         this.simulationStateUI = new SimulationStateUI(store);
+        this.chartPlotterUI = new ChartPlotterUI(document.getElementById("reactor-chart") as HTMLCanvasElement, store);
+        this.subscribe(store);
+    }
+    subscribe(store: Store): void {
+        this.heaterUI.subscribe(store);
+        this.reactorUI.subscribe(store);
+        this.simulationStateUI.subscribe(store);
+        this.chartPlotterUI.subscribe(store);
     }
 }
 
