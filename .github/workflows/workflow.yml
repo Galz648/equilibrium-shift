@@ -1,0 +1,33 @@
+name: my-workflow
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+      - run: bun run build # outputs to ./dist
+
+      # GitHub Pages upload needs ACTIONS_RUNTIME_TOKEN (not available in nektos/act).
+      - uses: actions/upload-pages-artifact@v3
+        if: ${{ env.ACT != 'true' }}
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # Job-level `if` cannot use `env` in act's schema; keep skip on the step.
+      - uses: actions/deploy-pages@v4
+        if: ${{ env.ACT != 'true' }}

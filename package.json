@@ -17,6 +17,7 @@
     "typescript": "^6.0.2"
   },
   "scripts": {
+    "build": "bun build ./index.html --outdir=dist",
     "test": "bun test",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix"
