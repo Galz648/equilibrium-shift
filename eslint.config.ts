@@ -7,7 +7,9 @@ export default defineConfig([
   { files: ["**/*.{js,mjs,cjs,ts,mts,cts,tsx}"], plugins: { js }, extends: ["js/recommended"], languageOptions: { globals: globals.browser } },
   tseslint.configs.recommended,
   {
+    ignores: ["**/dist/**"],
     files: ["**/src/ui/**/*.tsx"],
+
     rules: {
       // `h` is the classic JSX factory; TypeScript emits calls to it but ESLint does not count that as a use.
       "@typescript-eslint/no-unused-vars": [
