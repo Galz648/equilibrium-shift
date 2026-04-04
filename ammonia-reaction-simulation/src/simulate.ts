@@ -1,9 +1,19 @@
-import type { ReactorState, ReactorStateArray } from "./reactor"
-import { activation_energy_KJ, frequency_factor, reaction_enthalpy, volume, heat_capacity, cooling_constant, T_env, R } from "./constants"
-import { arrhenius_equation, getOrThrow, type derive } from "./utils"
-import { type State } from "./utils"
+import type { ReactorState } from "./reactor"
+import {
+    cooling_constant,
+    DERIVATIVE_MAX_HEAT_INPUT_KW,
+    equilibrium_K_reference_T_K,
+    equilibrium_K_temperature_sensitivity,
+    equilibrium_Q_K_match_relative_tol,
+    heat_capacity,
+    reaction_enthalpy,
+    reaction_extent_rate_k,
+    reactor_T_min_K,
+    species_floor_mol,
+    T_env,
+    volume,
+} from "./constants"
 import type { SimulatorState } from "./simulator"
-
 
 type Controls = {
     heat_input: number,
@@ -14,10 +24,47 @@ type Conditions = {
     reactor_state: ReactorState,
     controls: Controls
 }
-function arrayToState(arr: ReactorStateArray): ReactorState {
-    const [N2, H2, NH3, T] = arr
 
-    return { N2, H2, NH3, T }
+/** Stoichiometry: N₂ = n₂₀ − ξ, H₂ = h₂₀ − 3ξ, NH₃ = nh₃₀ + 2ξ. */
+export function speciesFromXi(n2_0: number, h2_0: number, nh3_0: number, xi: number): Pick<ReactorState, "N2" | "H2" | "NH3"> {
+    return {
+        N2: n2_0 - xi,
+        H2: h2_0 - 3 * xi,
+        NH3: nh3_0 + 2 * xi,
+    }
+}
+
+/**
+ * Single source of truth for batch references and ξ: reconciles stored species with (n₂₀, h₂₀, nh₃₀, ξ).
+ * If the four fields disagree with the displayed species, refs are re-derived from species at the given ξ (default 0).
+ */
+export function finalizeReactorState(r: ReactorState): ReactorState {
+    let xi = Number.isFinite(r.xi) ? r.xi : 0
+    let n2_0 = Number.isFinite(r.n2_0) ? r.n2_0 : r.N2 + xi
+    let h2_0 = Number.isFinite(r.h2_0) ? r.h2_0 : r.H2 + 3 * xi
+    let nh3_0 = Number.isFinite(r.nh3_0) ? r.nh3_0 : r.NH3 - 2 * xi
+
+    const derived = speciesFromXi(n2_0, h2_0, nh3_0, xi)
+    const tol = 1e-6
+    if (
+        Math.abs(r.N2 - derived.N2) > tol ||
+        Math.abs(r.H2 - derived.H2) > tol ||
+        Math.abs(r.NH3 - derived.NH3) > tol
+    ) {
+        xi = Number.isFinite(r.xi) ? r.xi : 0
+        n2_0 = r.N2 + xi
+        h2_0 = r.H2 + 3 * xi
+        nh3_0 = r.NH3 - 2 * xi
+    }
+
+    return {
+        xi,
+        n2_0,
+        h2_0,
+        nh3_0,
+        T: r.T,
+        ...speciesFromXi(n2_0, h2_0, nh3_0, xi),
+    }
 }
 
 function createInitialConditions(conditions_to_change: Partial<Conditions>): Conditions {
@@ -26,155 +73,180 @@ function createInitialConditions(conditions_to_change: Partial<Conditions>): Con
     const standard_conditions: Conditions = {
         simulator_state: {
             t: 0,
-            // Default integration step for RK4; tests and callers that omit dt would otherwise integrate over zero time.
-            dt: TIMESTEP, // NOTE: this is the default integration step for RK4
+            dt: TIMESTEP,
             dH2: 0,
             dNH3: 0,
             dN2: 0,
             dT: 0,
         },
-        reactor_state: {
+        reactor_state: finalizeReactorState({
             N2: 0,
             H2: 0,
             NH3: 0,
-            T: 298
-        },
+            T: 298,
+            xi: 0,
+            n2_0: 0,
+            h2_0: 0,
+            nh3_0: 0,
+        }),
         controls: {
             heat_input: 0
         }
+    }
+    const merged_reactor: ReactorState = {
+        ...standard_conditions.reactor_state,
+        ...conditions_to_change.reactor_state,
     }
     return {
         simulator_state: {
             ...standard_conditions.simulator_state,
             ...conditions_to_change.simulator_state,
         },
-        reactor_state: {
-            ...standard_conditions.reactor_state,
-            ...conditions_to_change.reactor_state,
-        },
+        reactor_state: finalizeReactorState(merged_reactor),
         controls: {
             ...standard_conditions.controls,
             ...conditions_to_change.controls,
         }
     }
 }
-function updateSimulationTime(simulator_state: SimulatorState, t: number, dt: number): SimulatorState {
+
+export function updateSimulationTime(simulator_state: SimulatorState, t: number, dt: number): SimulatorState {
     return {
         ...simulator_state,
         dt,
         t
     }
 }
-function stateToArray(s: ReactorState): ReactorStateArray { // TODO: change name - name doesn't reflect he fact that it converts the reactor state to an array of numbers
-    return [s.N2, s.H2, s.NH3, s.T]
+
+/** Game equilibrium constant K(T); smooth and bounded for typical T. */
+export function computeEquilibriumConstant(T: number): number {
+    return Math.exp(-equilibrium_K_temperature_sensitivity * (T - equilibrium_K_reference_T_K))
 }
 
-
-function reactionRate(k_forward: number, N2_concentration: number, H2_concentration: number, NH3_concentration: number, k_reverse: number,): number {
-    const r = k_forward * N2_concentration * Math.pow(H2_concentration, 3) - k_reverse * Math.pow(NH3_concentration, 2)
-    return r
-}
-function equilibriumConstant(deltaG_kJ: number, T: number) {
-    // a thermodynamical calculation
-    const R = 0.008314 // kJ/(mol·K)
-    return Math.exp(-deltaG_kJ / (R * T))
+function clampHeatInput(q: number): number {
+    if (!Number.isFinite(q)) return 0
+    return Math.max(-DERIVATIVE_MAX_HEAT_INPUT_KW, Math.min(DERIVATIVE_MAX_HEAT_INPUT_KW, q))
 }
 
-function reactionQuotient(N2: number, H2: number, NH3: number) {
-    return (NH3 ** 2) / (N2 * (H2 ** 3))
+/** Q = [NH₃]² / ([N₂][H₂]³); denominator species floored to avoid divide-by-zero. */
+function reactionQuotientClamped(N2: number, H2: number, NH3: number): number {
+    const e = species_floor_mol
+    const n2 = Math.max(N2, e)
+    const h2 = Math.max(H2, e)
+    return (NH3 * NH3) / (n2 * h2 * h2 * h2)
 }
 
-/** Thermodynamic snapshot for UI/diagnostics; uses the same ΔG°, K, and Q definitions as the integration. */
+/** True when Q and K agree within tolerance (net driving force for ξ ~ 0). */
+export function isNearReactionQuotientEquilibrium(K: number, Q: number): boolean {
+    if (!Number.isFinite(K) || !Number.isFinite(Q) || K <= 0 || Q < 0) return false
+    const denom = K + Q
+    if (!(denom > 0)) return false
+    return Math.abs(K - Q) / denom < equilibrium_Q_K_match_relative_tol
+}
+
+/** Thermodynamic snapshot for UI; K and Q match the extent integrator. */
 type ReactorDiagnostics = {
-    deltaG_kJ: number
     K_eq: number
     Q: number | null
     direction: "forward" | "reverse" | "equilibrium" | "n/a"
-    totalMoles: number
+    /** Q ≈ K at this T (reaction quotient matches equilibrium constant). */
+    atReactionEquilibrium: boolean
+    /** Mol of gas molecules N₂ + H₂ + NH₃; changes with ξ (4 mol reactants → 2 mol NH₃ per turnover). */
+    gasMoleculesMol: number
+    /** Mol of N atoms (2 per N₂, 1 per NH₃); invariant for a closed batch. */
+    nAtomsMol: number
+    /** Mol of H atoms (2 per H₂, 3 per NH₃); invariant for a closed batch. */
+    hAtomsMol: number
+    extentXi: number
 }
 
 function computeReactorDiagnostics(reactor: ReactorState): ReactorDiagnostics {
-    const T = reactor.T
-    const dG = deltaG(T)
-    const K_eq = Math.exp(-dG / (R * T))
-    const { N2, H2, NH3 } = reactor
-    const canQuotient = N2 > 0 && H2 > 0
-    const Q = canQuotient ? reactionQuotient(N2, H2, NH3) : null
+    const r = finalizeReactorState(reactor)
+    const { N2, H2, NH3 } = speciesFromXi(r.n2_0, r.h2_0, r.nh3_0, r.xi)
+    const T = r.T
+    const K_eq = computeEquilibriumConstant(T)
+    const canQuotient = Number.isFinite(N2) && Number.isFinite(H2) && Number.isFinite(NH3)
+    const Q = canQuotient ? reactionQuotientClamped(N2, H2, NH3) : null
+    const atReactionEquilibrium =
+        Q !== null && isNearReactionQuotientEquilibrium(K_eq, Q)
     let direction: ReactorDiagnostics["direction"] = "n/a"
-    if (Q !== null && Number.isFinite(Q)) {
-        if (K_eq > Q) direction = "forward"
-        else if (K_eq < Q) direction = "reverse"
-        else direction = "equilibrium"
+    if (Q !== null && Number.isFinite(Q) && Number.isFinite(K_eq)) {
+        if (atReactionEquilibrium) direction = "equilibrium"
+        else if (K_eq > Q) direction = "forward"
+        else direction = "reverse"
     }
+    const gasMoleculesMol = N2 + H2 + NH3
+    const nAtomsMol = 2 * N2 + NH3
+    const hAtomsMol = 2 * H2 + 3 * NH3
     return {
-        deltaG_kJ: dG,
         K_eq,
         Q,
         direction,
-        totalMoles: N2 + H2 + NH3,
-    }
-}
-
-function deltaG(T: number) {
-    // TODO: move to constants file
-    const deltaH = -92 // kJ/mol
-    const deltaS = -0.198 // kJ/mol·K
-    return deltaH - T * deltaS
-}
-// implement: wrapped derivatives is a closure that captures the controls, partially applied to the derivatives function
-
-function wrappedDerivatives(controls: Controls): derive {
-    return function derivatives(t: number, arr: State): ReactorStateArray {
-        const s = arrayToState(arr as ReactorStateArray)  // TODO: "lift" transformation to the caller
-        // const k_eq = Math.pow(s.NH3, 2) / (s.N2 * Math.pow(s.H2, 3))
-        const dG = deltaG(s.T)
-        const k_eq = Math.exp(-dG / (R * s.T))
-        // const k_eq = equilibriumConstant
-        const k_forward = arrhenius_equation(activation_energy_KJ, s.T, frequency_factor)
-        const k_reverse = k_forward / k_eq
-        const rate: number = reactionRate(k_forward, s.N2, s.H2, s.NH3, k_reverse)
-        // change in concentrations
-        const dN2 = -rate
-        const dH2 = -3 * rate
-        const dNH3 = 2 * rate
-        // change in temperature
-        const dH = reaction_enthalpy * rate * volume
-
-        const dT = ((dH + controls.heat_input) / heat_capacity) - cooling_constant * (s.T - T_env)
-
-        const results = [dN2, dH2, dNH3, dT] as ReactorStateArray
-
-        if (results.some(x => !Number.isFinite(x))) {
-            console.log("bad derivative", { t, s })
-            throw new Error("NaN in derivative")
-        }
-        return results
+        atReactionEquilibrium,
+        gasMoleculesMol,
+        nAtomsMol,
+        hAtomsMol,
+        extentXi: r.xi,
     }
 }
 
 function clampReactorState(reactor_state: ReactorState): ReactorState {
+    const r = finalizeReactorState(reactor_state)
     return {
-        ...reactor_state,
-        T: Math.max(reactor_state.T, 0),
-        N2: Math.max(reactor_state.N2, 0),
-        H2: Math.max(reactor_state.H2, 0),
-        NH3: Math.max(reactor_state.NH3, 0),
+        ...r,
+        T: Math.max(r.T, reactor_T_min_K),
     }
 }
-// simulation
+
 export function updateReactorState(conditions: Conditions): ReactorState {
-    const derivatives = wrappedDerivatives(conditions.controls)
-    const state_arr = stateToArray(conditions.reactor_state)
+    const dt = conditions.simulator_state.dt
+    let r = finalizeReactorState(conditions.reactor_state)
+    let { xi, T, n2_0, h2_0, nh3_0 } = r
+    const { N2, H2, NH3 } = speciesFromXi(n2_0, h2_0, nh3_0, xi)
 
-    const reactor_state = rk4(derivatives, state_arr as State, conditions.simulator_state.t, conditions.simulator_state.dt)
+    const xiMin = -nh3_0 / 2
+    const xiMax = Math.min(n2_0, h2_0 / 3)
 
-    // clamping the reactor state to be positive (no negative concentrations, no negative temperature)
-    const clamped_reactor_state = clampReactorState(arrayToState(reactor_state)) // this is the final reactor state to be returned
+    const heat = clampHeatInput(conditions.controls.heat_input)
 
+    if (!(xiMax - xiMin > 1e-15)) {
+        const dT = (heat / heat_capacity) - cooling_constant * (T - T_env)
+        T = Math.max(T + dT * dt, reactor_T_min_K)
+        return clampReactorState({
+            ...r,
+            xi,
+            T,
+            n2_0,
+            h2_0,
+            nh3_0,
+            ...speciesFromXi(n2_0, h2_0, nh3_0, xi),
+        })
+    }
 
-    return clamped_reactor_state
+    const Q = reactionQuotientClamped(N2, H2, NH3)
+    const K = computeEquilibriumConstant(T)
+    let rate = reaction_extent_rate_k * (K - Q) / (K + Q)
+    if (!Number.isFinite(rate)) rate = 0
+
+    const xiTentative = xi + rate * dt
+    const xiNext = Math.min(Math.max(xiTentative, xiMin), xiMax)
+    const actualDxi = xiNext - xi
+    const effectiveRate = dt !== 0 ? actualDxi / dt : 0
+
+    const dH = reaction_enthalpy * effectiveRate * volume
+    const dT = ((dH + heat) / heat_capacity) - cooling_constant * (T - T_env)
+    T = Math.max(T + dT * dt, reactor_T_min_K)
+
+    return clampReactorState({
+        ...r,
+        xi: xiNext,
+        T,
+        n2_0,
+        h2_0,
+        nh3_0,
+        ...speciesFromXi(n2_0, h2_0, nh3_0, xiNext),
+    })
 }
-
 
 function assertValidReactorState(state: ReactorState): void {
     if (state.T < 0) {
@@ -182,25 +254,10 @@ function assertValidReactorState(state: ReactorState): void {
     }
 
     if (state.N2 < 0 || state.H2 < 0 || state.NH3 < 0) throw new Error("negative concentration")
-    if (![state.N2, state.H2, state.NH3, state.T].every(Number.isFinite)) throw new Error("NaN/Inf")
-    // stoichiometry consistency
-
+    if (![state.N2, state.H2, state.NH3, state.T, state.xi].every(Number.isFinite)) throw new Error("NaN/Inf")
 }
+
 function stepHaberBoschReaction(conditions: Conditions): Conditions {
-    const k_c = equilibriumConstant(deltaG(conditions.reactor_state.T), conditions.reactor_state.T)
-    const Q = reactionQuotient(conditions.reactor_state.N2, conditions.reactor_state.H2, conditions.reactor_state.NH3)
-
-
-    console.log(
-        `t: ${conditions.simulator_state.t}\n` +
-        `\tN2: ${conditions.reactor_state.N2}\n` +
-        `\tH2: ${conditions.reactor_state.H2}\n` +
-        `\tNH3: ${conditions.reactor_state.NH3}\n` +
-        `\tT: ${conditions.reactor_state.T}\n` +
-        `\tQ: ${Q}\n` +
-        `\tk_c: ${k_c}`
-    );
-
     conditions.reactor_state = clampReactorState(updateReactorState(conditions))
     conditions.simulator_state = updateSimulationState(conditions.simulator_state)
 
@@ -240,39 +297,9 @@ function updateSimulationState(sim: SimulatorState): SimulatorState {
     return new_sim_state
 }
 
-
-
-export function rk4( // An implementation of the rk4 algorithm - 4th order ODE numerical
-    derivative: derive,
-    initial_simulation_state: State,
-    t0: number,
-    dt: number,
-): ReactorStateArray {
-
-    const t = t0;
-    let state_arr = [...initial_simulation_state];
-
-    const k1 = derivative(t, state_arr as State);
-    const k2 = derivative(t + dt / 2, state_arr.map((yi, j) => yi + dt * getOrThrow(k1, j) / 2) as State);
-    const k3 = derivative(t + dt / 2, state_arr.map((yi, j) => yi + dt * getOrThrow(k2, j) / 2) as State);
-    const k4 = derivative(t + dt, state_arr.map((yi, j) => yi + dt * getOrThrow(k3, j)) as State);
-
-    state_arr = state_arr.map(
-        (yi, j) =>
-            yi + (dt / 6) *
-            (getOrThrow(k1, j) +
-                2 * getOrThrow(k2, j) +
-                2 * getOrThrow(k3, j) +
-                getOrThrow(k4, j))
-    );
-
-    return [...state_arr] as ReactorStateArray;
-}
-
 export {
     computeReactorDiagnostics,
     stepHaberBoschReaction,
-    updateSimulationTime,
     createInitialConditions,
     type Conditions,
     type Controls,

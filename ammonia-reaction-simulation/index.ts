@@ -1,5 +1,9 @@
 import {
+    computeEquilibriumConstant,
     computeReactorDiagnostics,
+    finalizeReactorState,
+    isNearReactionQuotientEquilibrium,
+    speciesFromXi,
     stepHaberBoschReaction,
     updateSimulationTime,
     type Conditions,
@@ -10,7 +14,11 @@ import type { ReactorState } from "./src/reactor"
 import type { SimulatorState } from "./src/simulator"
 
 export {
+    computeEquilibriumConstant,
     computeReactorDiagnostics,
+    finalizeReactorState,
+    isNearReactionQuotientEquilibrium,
+    speciesFromXi,
     type Conditions,
     type Controls,
     type ReactorDiagnostics,
