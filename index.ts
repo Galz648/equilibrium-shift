@@ -1,24 +1,29 @@
-import UI from "./src/ui";
+import { mountAmmoniaEquilibriumApp } from "./src/ui/app";
 import { createStore } from "./src/store";
 import { ActionType } from "./src/state";
 import { createInitialConditions, type Conditions } from "./ammonia-reaction-simulation/src/simulate";
 
-
-
-// Setup 
+// Setup
 
 let last = performance.now();
 
 // initial conditions
-export const store = createStore(createInitialConditions({
-    reactor_state: {
-        H2: 1,
-        N2: 3,
-        NH3: 0,
-        T: 700
-    }
-} as Partial<Conditions>))
-new UI(store)
+export const store = createStore(
+    createInitialConditions({
+        reactor_state: {
+            H2: 1,
+            N2: 3,
+            NH3: 0,
+            T: 700,
+        },
+    } as Partial<Conditions>),
+);
+
+const root = document.getElementById("root");
+if (!root) {
+    throw new Error("Missing #root — the app expects a single mount point in index.html");
+}
+mountAmmoniaEquilibriumApp(root, store);
 
 
 

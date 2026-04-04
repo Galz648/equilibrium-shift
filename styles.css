@@ -1,4 +1,4 @@
-/* Ammonia equilibrium simulation — app shell */
+/* Ammonia equilibrium — readable two-column layout */
 
 *,
 *::before,
@@ -15,8 +15,8 @@ body {
     margin: 0;
     min-height: 100%;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
-    font-size: 1rem;
-    line-height: 1.5;
+    font-size: 1.0625rem;
+    line-height: 1.55;
     color: #e8eaed;
     background: radial-gradient(120% 100% at 50% 0%, #1a2332 0%, #0d1117 55%, #070a0e 100%);
 }
@@ -31,17 +31,18 @@ body {
     flex: 1;
     display: flex;
     flex-direction: row;
+    align-items: stretch;
     min-height: 0;
 }
 
 .panel {
     flex: 1;
     min-width: 0;
-    padding: clamp(1rem, 3vw, 1.75rem);
+    padding: clamp(1.25rem, 3vw, 2rem);
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
     background: rgba(13, 17, 23, 0.35);
     backdrop-filter: blur(8px);
 }
@@ -50,35 +51,41 @@ body {
     border-right: none;
 }
 
+.panel--reactor {
+    max-width: 36rem;
+}
+
 .panel__title {
     margin: 0;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: #8b949e;
 }
 
 .equation {
     margin: 0;
-    font-size: 1.125rem;
+    font-size: 1.2rem;
     font-variant-numeric: tabular-nums;
+    line-height: 1.4;
 }
 
-.equation-note {
-    margin: 0;
+.tagline {
+    margin: -0.25rem 0 0;
     color: #8b949e;
-    font-size: 0.8125rem;
-    max-width: 36ch;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    max-width: 38ch;
 }
 
+/* Equilibrium banner */
 .equilibrium-status {
     margin: 0;
-    padding: 0.65rem 0.85rem;
+    padding: 0.75rem 1rem;
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(0, 0, 0, 0.2);
-    max-width: 42ch;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.18);
 }
 
 .equilibrium-status--idle {
@@ -87,14 +94,15 @@ body {
 
 .equilibrium-status--at-eq {
     border-color: rgba(126, 231, 135, 0.45);
-    background: rgba(46, 160, 67, 0.12);
+    background: rgba(46, 160, 67, 0.1);
 }
 
 .equilibrium-status__current {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: #e8eaed;
+    line-height: 1.45;
 }
 
 .equilibrium-status__current:empty {
@@ -102,261 +110,309 @@ body {
 }
 
 .equilibrium-status__latched {
-    margin: 0.35rem 0 0;
-    font-size: 0.8125rem;
+    margin: 0.5rem 0 0;
+    font-size: 0.875rem;
     color: #8b949e;
-    font-weight: 400;
+    line-height: 1.45;
 }
 
 .equilibrium-status__latched:empty {
     display: none;
 }
 
-.metric {
-    margin: 0;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.metric--hero {
-    font-size: clamp(2rem, 5vw, 2.75rem);
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-    color: #58a6ff;
-}
-
-/* Concentrations sub-panel */
-
-.concentrations-panel {
-    margin-top: 0.25rem;
-    padding: 1rem 1rem 1.125rem;
+/* Card: one soft container per major topic */
+.readout-card {
+    padding: 1.125rem 1.25rem 1.25rem;
     border-radius: 10px;
-    background: rgba(0, 0, 0, 0.22);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-.concentrations-panel__title {
-    margin: 0 0 0.75rem;
-    font-size: 0.6875rem;
+.readout-card__title {
+    margin: 0;
+    font-size: 0.8125rem;
     font-weight: 600;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #8b949e;
 }
 
-.concentrations {
-    margin: 0;
-    padding: 0;
-    list-style: none;
+.hero-readout {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.35rem;
 }
 
-.concentration {
-    display: grid;
-    grid-template-columns: minmax(4.5rem, auto) 1fr auto;
-    align-items: center;
-    gap: 0.75rem 1rem;
-    padding: 0.6rem 0.75rem;
-    border-radius: 8px;
-    font-variant-numeric: tabular-nums;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-left-width: 3px;
-}
-
-.concentration__label {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: #c9d1d9;
-}
-
-.concentration__label sub {
-    font-size: 0.75em;
-}
-
-.concentration__metric {
-    justify-self: end;
-    font-size: 1.125rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: #f0f6fc;
-    min-width: 5.5ch;
-    text-align: right;
-}
-
-.concentration__unit {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: #8b949e;
-    text-transform: lowercase;
-}
-
-.concentration--h2 {
-    border-left-color: rgba(88, 166, 255, 0.85);
-}
-
-.concentration--n2 {
-    border-left-color: rgba(163, 113, 247, 0.9);
-}
-
-.concentration--nh3 {
-    border-left-color: rgba(126, 231, 135, 0.9);
-}
-
-.concentration--h2 .concentration__label {
-    color: #79c0ff;
-}
-
-.concentration--n2 .concentration__label {
-    color: #d2a8ff;
-}
-
-.concentration--nh3 .concentration__label {
-    color: #7ee787;
-}
-
-/* Simulation state (thermodynamics + integrator) */
-
-.sim-state-panel {
-    margin-top: 0.25rem;
-    padding: 1rem 1rem 1.125rem;
-    border-radius: 10px;
-    background: rgba(0, 0, 0, 0.22);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
-}
-
-.sim-state-list {
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.sim-state-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: baseline;
-    gap: 0.75rem 1rem;
-    padding: 0.5rem 0.65rem;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    font-variant-numeric: tabular-nums;
-}
-
-.sim-state-row__label {
-    margin: 0;
+.hero-readout__label {
     font-size: 0.8125rem;
     font-weight: 500;
     color: #8b949e;
 }
 
-.sim-state-row__value {
+.hero-readout__value {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: clamp(1.85rem, 4.5vw, 2.35rem);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    color: #58a6ff;
+    line-height: 1.15;
+}
+
+/* Species: one row, three columns — easier to compare than three stacked cards */
+.species-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem 1rem;
+    text-align: center;
+}
+
+.species-tile {
+    padding: 0.65rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.03);
+    border-top: 3px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.species-tile--h2 {
+    border-top-color: rgba(88, 166, 255, 0.85);
+}
+
+.species-tile--n2 {
+    border-top-color: rgba(163, 113, 247, 0.9);
+}
+
+.species-tile--nh3 {
+    border-top-color: rgba(126, 231, 135, 0.9);
+}
+
+.species-tile__sym {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #8b949e;
+    letter-spacing: 0.02em;
+}
+
+.species-tile--h2 .species-tile__sym {
+    color: #79c0ff;
+}
+
+.species-tile--n2 .species-tile__sym {
+    color: #d2a8ff;
+}
+
+.species-tile--nh3 .species-tile__sym {
+    color: #7ee787;
+}
+
+.species-tile__val {
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #f0f6fc;
+    word-break: break-all;
+}
+
+.species-tile__unit {
+    font-size: 0.75rem;
+    color: #8b949e;
+}
+
+/* Simulation: grouped labels + simple rows (no inner boxes) */
+.readout-group__title {
+    margin: 0.75rem 0 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6e7681;
+}
+
+.readout-card .data-rows:first-of-type .readout-group__title {
+    margin-top: 0;
+}
+
+.data-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-variant-numeric: tabular-nums;
+}
+
+.data-row:last-child {
+    border-bottom: none;
+}
+
+.data-row__label {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9375rem;
+    color: #8b949e;
+    line-height: 1.4;
+}
+
+.data-row__value {
+    flex-shrink: 0;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: #f0f6fc;
     text-align: right;
-    max-width: 18ch;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    max-width: 55%;
+    word-break: break-word;
 }
 
+/* Controls column */
 .control-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    max-width: 22rem;
 }
 
 .control-group label {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 500;
     color: #8b949e;
 }
 
 .control-group input[type="range"] {
     width: 100%;
-    max-width: 320px;
     accent-color: #f78166;
     cursor: pointer;
 }
 
-.clock-display {
-    margin: 0;
-    font-size: clamp(1.25rem, 3vw, 1.75rem);
+.controls-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.85rem 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    max-width: 22rem;
+}
+
+.metric-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.4rem 0;
+}
+
+.metric-line__label {
+    font-size: 0.875rem;
+    color: #8b949e;
+    flex-shrink: 0;
+}
+
+.metric-line__value {
+    font-size: 0.9375rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+    color: #f0f6fc;
+    text-align: right;
+}
+
+.metric-line__value--time {
     color: #7ee787;
 }
 
-.heater-display {
-    margin: 0;
-    font-size: clamp(1.25rem, 3vw, 1.75rem);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
+.metric-line__value--heat {
     color: #f78166;
 }
 
-.aux-value {
-    font-size: 0.875rem;
-    color: #8b949e;
+.metric-line__value--temp {
+    color: #58a6ff;
 }
 
+/* Charts */
 .chart-section {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.65rem;
+    flex: 1;
     min-height: 0;
     min-width: 0;
-    max-width: 100%;
-    overflow-x: hidden;
+    padding-top: 0.5rem;
 }
 
 .chart-section__title {
     margin: 0;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #8b949e;
 }
 
-.chart-section__hint {
-    margin: 0 0 0.25rem;
-    font-size: 0.8125rem;
+.chart-help {
+    font-size: 0.875rem;
     color: #8b949e;
-    line-height: 1.45;
+}
+
+.chart-help__summary {
+    cursor: pointer;
+    color: #c9d1d9;
+    font-weight: 500;
+    list-style: none;
+}
+
+.chart-help__summary::-webkit-details-marker {
+    display: none;
+}
+
+.chart-help__summary::before {
+    content: "▸ ";
+    color: #8b949e;
+}
+
+.chart-help[open] .chart-help__summary::before {
+    content: "▾ ";
+}
+
+.chart-help__body {
+    margin: 0.5rem 0 0;
+    padding-left: 0.85rem;
+    border-left: 2px solid rgba(255, 255, 255, 0.08);
+    line-height: 1.5;
     max-width: 48ch;
 }
 
 .chart-stack {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.85rem;
     min-width: 0;
-    max-width: 100%;
+    flex: 1;
 }
 
 .chart-fig {
     margin: 0;
     position: relative;
-    height: 180px;
+    height: 168px;
     width: 100%;
-    max-width: 100%;
     min-width: 0;
     overflow: hidden;
 }
 
 .chart-fig:last-of-type {
-    height: 160px;
+    height: 148px;
 }
 
 .chart-fig canvas {
@@ -364,6 +420,30 @@ body {
     width: 100% !important;
     height: 100% !important;
     max-width: 100% !important;
+}
+
+@media (max-width: 720px) {
+    .species-grid {
+        grid-template-columns: 1fr;
+        text-align: left;
+    }
+
+    .species-tile {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: flex-start;
+        gap: 0.5rem 1rem;
+    }
+
+    .species-tile__sym {
+        min-width: 2.5rem;
+    }
+
+    .species-tile__val {
+        flex: 1;
+        text-align: right;
+    }
 }
 
 @media (max-width: 640px) {
@@ -374,6 +454,7 @@ body {
     .panel {
         border-right: none;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        max-width: none;
     }
 
     .panel:last-child {
