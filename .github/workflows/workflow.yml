@@ -27,6 +27,8 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
     steps:
       # Job-level `if` cannot use `env` in act's schema; keep skip on the step.
       - uses: actions/deploy-pages@v4
