@@ -1,39 +1,34 @@
 import { Chart, LinearScale, Title, PointElement, LineController, Legend, LineElement, Tooltip } from "chart.js";
-import type { Conditions } from "../../../ammonia-reaction-simulation/src/simulate";
-import type { Store } from "../../store";
+import type { Conditions } from "#simulation/src/simulate.ts";
+import type { Store } from "#src/store.ts";
+import { historyLayout } from "#ui/charts/logic/layout.ts";
 import {
-    CHART_NH3_Y_INITIAL_MAX,
-    CHART_NH3_Y_MIN,
-    CHART_REACTANTS_Y_MAX,
-    CHART_REACTANTS_Y_MIN,
-    CHART_TIME_RIGHT_PAD_S,
-    CHART_TIME_WINDOW_S,
     chartTooltipMolCallbacks,
     computeSlidingTimeAxis,
     moleHistorySeries,
     nh3ChartDataset,
     nextNh3YAxisMax,
     reactantChartDatasets,
-} from "./reactor-history-charts.model";
+} from "#ui/charts/logic/model.ts";
 
 Chart.register(LineController, LineElement, PointElement, Title, Tooltip, Legend, LinearScale);
 
 const chartTooltipMol = { callbacks: chartTooltipMolCallbacks };
 
-/**
- * Owns Chart.js instances and the store subscription; series math lives in
- * `reactor-history-charts.model.ts`.
- */
-export class ReactorHistoryCharts {
+/** Chart.js pair for reactant and NH₃ histories; series math is in `./model`. */
+export class HistoryCharts {
     private readonly chartReactants: Chart;
     private readonly chartNh3: Chart;
-    private nh3YMax = CHART_NH3_Y_INITIAL_MAX;
+    private nh3YMax = historyLayout.nh3Y.initialMax;
 
     constructor(
         private readonly store: Store,
         canvasReactants: HTMLCanvasElement,
         canvasNh3: HTMLCanvasElement,
     ) {
+        const { timeWindowS, timeRightPadS, reactantsY, nh3Y } = historyLayout;
+        const xMaxInitial = timeWindowS + timeRightPadS;
+
         const commonOptions = {
             parsing: false as const,
             animation: false as const,
@@ -64,15 +59,15 @@ export class ReactorHistoryCharts {
                     x: {
                         type: "linear",
                         min: 0,
-                        max: CHART_TIME_WINDOW_S + CHART_TIME_RIGHT_PAD_S,
+                        max: xMaxInitial,
                         title: { display: true, text: "Time (s)", color: "#8b949e" },
                         ticks: { color: "#8b949e" },
                         grid: { color: "rgba(255,255,255,0.06)" },
                     },
                     y: {
                         type: "linear",
-                        min: CHART_REACTANTS_Y_MIN,
-                        max: CHART_REACTANTS_Y_MAX,
+                        min: reactantsY.min,
+                        max: reactantsY.max,
                         title: { display: true, text: "mol", color: "#8b949e" },
                         ticks: { color: "#8b949e", maxTicksLimit: 8 },
                         grid: { color: "rgba(255,255,255,0.06)" },
@@ -99,14 +94,14 @@ export class ReactorHistoryCharts {
                     x: {
                         type: "linear",
                         min: 0,
-                        max: CHART_TIME_WINDOW_S + CHART_TIME_RIGHT_PAD_S,
+                        max: xMaxInitial,
                         title: { display: true, text: "Time (s)", color: "#8b949e" },
                         ticks: { color: "#8b949e" },
                         grid: { color: "rgba(255,255,255,0.06)" },
                     },
                     y: {
                         type: "linear",
-                        min: CHART_NH3_Y_MIN,
+                        min: nh3Y.min,
                         max: this.nh3YMax,
                         title: { display: true, text: "mol", color: "#8b949e" },
                         ticks: { color: "#8b949e", maxTicksLimit: 7 },
@@ -124,16 +119,14 @@ export class ReactorHistoryCharts {
     }
 
     private plot(simulation_history: Conditions[]): void {
+        const { timeWindowS, timeRightPadS } = historyLayout;
+
         const { N2, H2, NH3 } = moleHistorySeries(simulation_history);
         this.nh3YMax = nextNh3YAxisMax(this.nh3YMax, NH3);
         const nh3Scales = this.chartNh3.options.scales as { y: { min?: number; max?: number } };
         nh3Scales.y.max = this.nh3YMax;
 
-        const { xMin, xMax } = computeSlidingTimeAxis(
-            simulation_history,
-            CHART_TIME_WINDOW_S,
-            CHART_TIME_RIGHT_PAD_S,
-        );
+        const { xMin, xMax } = computeSlidingTimeAxis(simulation_history, timeWindowS, timeRightPadS);
         const reactantX = this.chartReactants.options.scales as { x: { min?: number; max?: number } };
         const nh3X = this.chartNh3.options.scales as { x: { min?: number; max?: number } };
         reactantX.x.min = xMin;

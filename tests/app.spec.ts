@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { createInitialConditions, type Conditions } from "../ammonia-reaction-simulation/src/simulate";
-import { ActionType } from "../src/state";
-import { createStore } from "../src/store";
+import { createInitialConditions, type Conditions } from "#simulation/src/simulate.ts";
+import { ActionType } from "#src/state.ts";
+import { createStore } from "#src/store.ts";
 
 describe.skip("Equilibrium app wiring", () => {
     test("store STEP dispatch uses the simulation and returns sane reactor state", () => {

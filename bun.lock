@@ -6,6 +6,7 @@
       "name": "equilibrium",
       "dependencies": {
         "ammonia-reaction-simulation": "file:./ammonia-reaction-simulation",
+        "chart.js": "^4.5.1",
       },
       "devDependencies": {
         "@eslint/js": "^10.0.1",

@@ -1,7 +1,7 @@
-import { mountAmmoniaEquilibriumApp } from "./src/ui/app";
-import { createStore } from "./src/store";
-import { ActionType } from "./src/state";
-import { createInitialConditions, type Conditions } from "./ammonia-reaction-simulation/src/simulate";
+import { mountAmmoniaEquilibriumApp } from "#ui/app.ts";
+import { createStore } from "#src/store.ts";
+import { ActionType } from "#src/state.ts";
+import { createInitialConditions, type Conditions } from "#simulation/src/simulate.ts";
 
 // Setup
 
@@ -37,8 +37,4 @@ function loop(now: number) {
 }
 
 
-// store.subscribe((state: Conditions) => {
-//     console.log(`conditions not updated by store listener: ${JSON.stringify(state)}`)
-//     // conditions = state // TODO: fix - directly mutating the conditions object is not a good idea
-// })
 requestAnimationFrame(loop);

@@ -1,13 +1,5 @@
-import type { Conditions } from "../../../ammonia-reaction-simulation/src/simulate";
-
-export const CHART_TIME_WINDOW_S = 90;
-export const CHART_TIME_RIGHT_PAD_S = 0.8;
-export const CHART_REACTANTS_Y_MIN = 0;
-export const CHART_REACTANTS_Y_MAX = 4.25;
-export const CHART_NH3_Y_MIN = 0;
-export const CHART_NH3_Y_INITIAL_MAX = 0.15;
-export const CHART_NH3_Y_CAP_MOL = 2.5;
-export const CHART_MAX_POINTS = 1200;
+import type { Conditions } from "#simulation/src/simulate.ts";
+import { historyLayout } from "#ui/charts/logic/layout.ts";
 
 export const chartTooltipMolCallbacks = {
     label(ctx: { dataset: { label?: string }; parsed: { y: number | null } }) {
@@ -57,26 +49,28 @@ export function moleHistorySeries(simulation_history: Conditions[]): {
     H2: Point[];
     NH3: Point[];
 } {
+    const max = historyLayout.maxPoints;
     const N2 = downsampleSeries(
         simulation_history.map((p) => ({ x: p.simulator_state.t, y: p.reactor_state.N2 })),
-        CHART_MAX_POINTS,
+        max,
     );
     const H2 = downsampleSeries(
         simulation_history.map((p) => ({ x: p.simulator_state.t, y: p.reactor_state.H2 })),
-        CHART_MAX_POINTS,
+        max,
     );
     const NH3 = downsampleSeries(
         simulation_history.map((p) => ({ x: p.simulator_state.t, y: p.reactor_state.NH3 })),
-        CHART_MAX_POINTS,
+        max,
     );
     return { N2, H2, NH3 };
 }
 
 export function nextNh3YAxisMax(prevMax: number, nh3Series: Point[]): number {
     const maxNH3 = nh3Series.length ? Math.max(...nh3Series.map((d) => d.y)) : 0;
+    const { nh3Y } = historyLayout;
     return Math.min(
-        CHART_NH3_Y_CAP_MOL,
-        Math.max(prevMax, maxNH3 * 1.12 + 1e-9, CHART_NH3_Y_INITIAL_MAX * 0.5),
+        nh3Y.capMol,
+        Math.max(prevMax, maxNH3 * 1.12 + 1e-9, nh3Y.initialMax * 0.5),
     );
 }
 

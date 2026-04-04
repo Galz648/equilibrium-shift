@@ -1,15 +1,15 @@
-import { ActionType } from "../../state";
-import type { Store } from "../../store";
-import type { HeaterControlElements } from "./controls.types";
+import { ActionType } from "#src/state.ts";
+import type { Store } from "#src/store.ts";
+import type { HeaterTargets } from "#ui/controls/logic/types.ts";
 
 /** Wires the heater slider to the store and mirrors heat input into the value node. */
 export class HeaterControl {
     constructor(
         private readonly store: Store,
-        private readonly els: HeaterControlElements,
+        private readonly targets: HeaterTargets,
     ) {
-        this.els.slider.value = "0";
-        this.els.slider.addEventListener("change", (event) => {
+        this.targets.slider.value = "0";
+        this.targets.slider.addEventListener("change", (event) => {
             const target = event.target as HTMLInputElement;
             const newValue = Number(target.value);
             this.store.dispatch({
@@ -22,7 +22,7 @@ export class HeaterControl {
 
     subscribe(): void {
         this.store.subscribe((state) => {
-            this.els.valueDisplay.textContent = `${state.controls.heat_input} W`;
+            this.targets.heatValue.textContent = `${state.controls.heat_input} W`;
         });
     }
 }

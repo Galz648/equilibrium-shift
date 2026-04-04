@@ -26,6 +26,13 @@
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+
+    "paths": {
+      "#src/*": ["./src/*"],
+      "#ui/*": ["./src/ui/*"],
+      "#simulation/*": ["./ammonia-reaction-simulation/*"],
+      "#tests/*": ["./tests/*"]
+    }
   }
 }

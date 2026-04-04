@@ -1,10 +1,11 @@
-import type { Store } from "../store";
-import { createControlsPanel } from "./controls/controls-panel";
-import { createReactorPanel } from "./reactor/reactor-panel";
-import { createAppShellLayout } from "./shell/app-shell.view";
+import type { Store } from "#src/store.ts";
+import { bindControlsPanel, createControlsPanel } from "#ui/controls/index.ts";
+import { bindReactorPanel, createReactorPanel } from "#ui/reactor/index.ts";
+import { shellLayout } from "#ui/shell/index.ts";
 
 /**
- * Mount orchestration: shell view + feature folders (`reactor/`, `controls/`, `charts/`, `core/`, `shell/`).
+ * Mount orchestration: `shell` + `reactor/`, `simulator/`, `controls/`, `charts/`, …
+ * Import feature panels only from each folder’s `index.ts` (not deep paths).
  */
 export function mountAmmoniaEquilibriumApp(root: HTMLElement, store: Store): void {
     root.className = "app";
@@ -13,11 +14,8 @@ export function mountAmmoniaEquilibriumApp(root: HTMLElement, store: Store): voi
     const reactor = createReactorPanel(store);
     const controls = createControlsPanel(store);
 
-    root.append(createAppShellLayout(reactor.root, controls.root));
+    root.append(shellLayout(reactor.root, controls.root));
 
-    reactor.reactorReadouts.subscribe();
-    reactor.simulationState.subscribe();
-    controls.heater.subscribe();
-    controls.sidebarReadouts.subscribe();
-    controls.charts.subscribe();
+    bindReactorPanel(reactor);
+    bindControlsPanel(controls);
 }

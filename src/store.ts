@@ -2,8 +2,8 @@ import {
     finalizeReactorState,
     stepHaberBoschReaction,
     type Conditions,
-} from "../ammonia-reaction-simulation/src/simulate";
-import { ActionType, type Action } from "./state";
+} from "#simulation/src/simulate.ts";
+import { ActionType, type Action } from "#src/state.ts";
 
 type Listener = (state: Conditions) => void;
 
@@ -41,7 +41,7 @@ export function createStore(initialState: Conditions): Store {
         }
     }
 
-    function dispatch(action: Action): void {
+    function dispatch(action: Action): void { // TODO: move to reducer
         switch (action.type) {
             case ActionType.SET_HEATER:
                 state.controls.heat_input = action.value;
@@ -63,8 +63,6 @@ export function createStore(initialState: Conditions): Store {
                 applySimulationStep(state, action.dt);
                 simulation_history.push(cloneConditions(state));
                 break;
-            case ActionType.CHANGE_TEMPERATURE:
-                throw new Error("CHANGE_TEMPERATURE is not wired up yet");
             default:
                 throw new Error(`Unknown action : ${JSON.stringify(action)}`);
         }
