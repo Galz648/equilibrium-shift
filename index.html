@@ -17,7 +17,12 @@
             </p>
             <p class="equation-note">
                 Ammonia synthesis: exothermic, reversible, equilibrium reaction.
+                A banner below appears when Q ≈ K (reaction equilibrium at the current temperature), and records the first time that happened in the run.
             </p>
+            <div class="equilibrium-status" id="equilibrium-status" role="status" aria-live="polite">
+                <p class="equilibrium-status__current" id="equilibrium-status-current"></p>
+                <p class="equilibrium-status__latched" id="equilibrium-status-latched"></p>
+            </div>
             <p class="metric metric--hero" id="temperature-gauge" aria-label="Temperature in kelvin">0</p>
             <section class="concentrations-panel" aria-labelledby="conc-heading">
                 <h3 class="concentrations-panel__title" id="conc-heading">Mole amounts</h3>
@@ -51,7 +56,7 @@
                         <dd class="sim-state-row__value" id="sim-state-dt">—</dd>
                     </div>
                     <div class="sim-state-row">
-                        <dt class="sim-state-row__label">ΔG° (this T)</dt>
+                        <dt class="sim-state-row__label">Extent ξ</dt>
                         <dd class="sim-state-row__value" id="sim-state-dg">—</dd>
                     </div>
                     <div class="sim-state-row">
@@ -67,8 +72,12 @@
                         <dd class="sim-state-row__value" id="sim-state-direction">—</dd>
                     </div>
                     <div class="sim-state-row">
-                        <dt class="sim-state-row__label">Total moles (gas)</dt>
+                        <dt class="sim-state-row__label">Gas molecules (N₂+H₂+NH₃)</dt>
                         <dd class="sim-state-row__value" id="sim-state-moles">—</dd>
+                    </div>
+                    <div class="sim-state-row">
+                        <dt class="sim-state-row__label">Atoms (conserved)</dt>
+                        <dd class="sim-state-row__value" id="sim-state-atoms">—</dd>
                     </div>
                 </dl>
             </section>
@@ -84,9 +93,23 @@
             <p class="clock-display" id="clock"></p>
             <p class="heater-display" id="heater-value"></p>
             <span class="aux-value" id="value"></span>
-            <!-- <canvas></canvas>
-            <div class="controls">...</div> -->
-            <canvas id="reactor-chart"></canvas>
+            <section class="chart-section" aria-labelledby="chart-heading">
+                <h3 class="chart-section__title" id="chart-heading">Moles vs time</h3>
+                <p class="chart-section__hint">
+                    N<sub>2</sub> and H<sub>2</sub> share one chart and the same vertical scale (mol).
+                    NH<sub>3</sub> is plotted separately so small amounts are visible; forward reaction consumes
+                    1 mol N<sub>2</sub> and 3 mol H<sub>2</sub> per 2 mol NH<sub>3</sub> formed.
+                    The time axis shows a sliding window of the most recent ~90&nbsp;s.
+                </p>
+                <div class="chart-stack">
+                    <figure class="chart-fig">
+                        <canvas id="reactor-chart-reactants" aria-label="Nitrogen and hydrogen amounts over time"></canvas>
+                    </figure>
+                    <figure class="chart-fig">
+                        <canvas id="reactor-chart-nh3" aria-label="Ammonia amount over time"></canvas>
+                    </figure>
+                </div>
+            </section>
         </aside>
     </div>
     <script src="index.ts" type="module"></script>

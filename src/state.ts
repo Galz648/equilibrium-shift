@@ -1,4 +1,5 @@
-import type { SimulatorState, ReactorState } from "ammonia-reaction-simulation";
+import type { ReactorState } from "../ammonia-reaction-simulation/src/reactor";
+import type { SimulatorState } from "../ammonia-reaction-simulation/src/simulator";
 
 export enum ActionType {
     SET_HEATER,

@@ -3,6 +3,9 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "dependencies": {
+    "ammonia-reaction-simulation": "file:./ammonia-reaction-simulation"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/bun": "latest",
@@ -14,6 +17,7 @@
     "typescript": "^6.0.2"
   },
   "scripts": {
+    "test": "bun test",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"
   }

@@ -1,8 +1,7 @@
-import type { Conditions } from "ammonia-reaction-simulation";
 import UI from "./src/ui";
 import { createStore } from "./src/store";
 import { ActionType } from "./src/state";
-import { createInitialConditions } from "./ammonia-reaction-simulation/src/simulate";
+import { createInitialConditions, type Conditions } from "./ammonia-reaction-simulation/src/simulate";
 
 
 

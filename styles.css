@@ -72,6 +72,46 @@ body {
     max-width: 36ch;
 }
 
+.equilibrium-status {
+    margin: 0;
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.2);
+    max-width: 42ch;
+}
+
+.equilibrium-status--idle {
+    display: none;
+}
+
+.equilibrium-status--at-eq {
+    border-color: rgba(126, 231, 135, 0.45);
+    background: rgba(46, 160, 67, 0.12);
+}
+
+.equilibrium-status__current {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #e8eaed;
+}
+
+.equilibrium-status__current:empty {
+    display: none;
+}
+
+.equilibrium-status__latched {
+    margin: 0.35rem 0 0;
+    font-size: 0.8125rem;
+    color: #8b949e;
+    font-weight: 400;
+}
+
+.equilibrium-status__latched:empty {
+    display: none;
+}
+
 .metric {
     margin: 0;
     padding: 0.75rem 1rem;
@@ -268,6 +308,62 @@ body {
 .aux-value {
     font-size: 0.875rem;
     color: #8b949e;
+}
+
+.chart-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 0;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.chart-section__title {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8b949e;
+}
+
+.chart-section__hint {
+    margin: 0 0 0.25rem;
+    font-size: 0.8125rem;
+    color: #8b949e;
+    line-height: 1.45;
+    max-width: 48ch;
+}
+
+.chart-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.chart-fig {
+    margin: 0;
+    position: relative;
+    height: 180px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.chart-fig:last-of-type {
+    height: 160px;
+}
+
+.chart-fig canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
 }
 
 @media (max-width: 640px) {
